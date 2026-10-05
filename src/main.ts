@@ -8,6 +8,7 @@ import { mountStrip } from './strip-ui';
 
 import { fmt, esc, icon, limitBatch, batchSoon, logoMark, wordmark } from './ui-utils';
 import { FEATURES } from './config';
+import { initTheme } from './theme';
 
 // Finishing touches. Slider value -> effect amount via `scale`. All default to off, except
 // Sharpen, which defaults to the selected preset's recommendation.
@@ -29,7 +30,10 @@ app.innerHTML = `
       <a href="#compress" data-tab="compress">Compress</a>
       <a href="#strip" data-tab="strip">Metadata Stripper</a>
     </nav>
-    <span class="nav-note">${icon.lock} Processed on your device</span>
+    <div class="nav-right">
+      <span class="nav-note">${icon.lock} Processed on your device</span>
+      <button id="theme-toggle" class="theme-toggle" type="button"><span class="i-sun">${icon.sun}</span><span class="i-moon">${icon.moon}</span></button>
+    </div>
   </header>
 
   <main id="view-strip" hidden></main>
@@ -440,3 +444,5 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 route();
+
+initTheme(document.getElementById('theme-toggle') as HTMLButtonElement);

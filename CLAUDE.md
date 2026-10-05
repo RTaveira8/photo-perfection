@@ -12,6 +12,9 @@ Vite + TypeScript (vanilla, no framework). Compression runs in a Web Worker via 
 - `src/main.ts`: all UI (markup, mode/platform picker, Fine-tune/Extras/Filters panels, result cards, ZIP, remove/clear)
 - `src/strip-ui.ts`: the Metadata stripper screen (second tool, `#strip` in the URL; header tabs switch tools)
 - `src/lib/strip.ts`: lossless JPEG metadata stripper (byte-level, no re-encode). Unit-tested in `strip.test.ts`
+- `src/theme.ts`: light/dark toggle (header button). No saved choice = follow the system; a click saves `pixel-lite-theme` in localStorage
+  and sets `data-theme` on `<html>`; an inline script in `index.html` applies it before first paint. Theme colours are CSS variables
+  in `style.css` (the dark set appears twice: `[data-theme='dark']` and the system media query, because CSS can't share them).
 - `src/ui-utils.ts`: shared `fmt`, `esc`, `icon`
 - `src/compare.ts`: full-screen before/after viewer (Slider and Flip modes)
 - `src/lib/compress.ts`: decode once, step down, apply effects, encode JPEG

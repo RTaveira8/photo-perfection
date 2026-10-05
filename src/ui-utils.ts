@@ -34,3 +34,6 @@ export const batchSoon = FEATURES.batch ? '' : '<span class="drop-soon"><b>PRO</
 export const logoMark = `<svg class="logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="0" y="0" width="6" height="6" rx="1.6" fill-opacity="1"/><rect x="9" y="0" width="6" height="6" rx="1.6" fill-opacity="0.78"/><rect x="18" y="0" width="6" height="6" rx="1.6" fill-opacity="0.5"/><rect x="0" y="9" width="6" height="6" rx="1.6" fill-opacity="0.78"/><rect x="9" y="9" width="6" height="6" rx="1.6" fill-opacity="0.5"/><rect x="18" y="9" width="6" height="6" rx="1.6" fill-opacity="0.28"/><rect x="0" y="18" width="6" height="6" rx="1.6" fill-opacity="0.5"/><rect x="9" y="18" width="6" height="6" rx="1.6" fill-opacity="0.28"/><rect x="18" y="18" width="6" height="6" rx="1.6" fill-opacity="0.12"/></svg>`;
 
 export const wordmark = `<span class="wm"><b>Pixel</b><i>-Lite</i></span>`;
+
+icon.sun = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>`;
+icon.moon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>`;
