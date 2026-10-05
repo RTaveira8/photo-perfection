@@ -1,14 +1,18 @@
-# PixelLite
+# Pixel-Lite
 
 Client-side image optimizer: shrinks photos without visible quality loss, strips EXIF/GPS, no uploads.
 Starting brief: `docs/handoff.md` (from the Clutch project). It is a guide to refine, not a spec.
-Repo: github.com/RTaveira8/photo-perfection (public). The product name is "PixelLite" (renamed from "Shred"); the GitHub repo and local folder are still named photo-perfection.
+Repo: github.com/RTaveira8/photo-perfection (public). The product name is "Pixel-Lite" (renamed from "Shred", then "PixelLite"); the GitHub repo and local folder are still named photo-perfection.
+Planned: a paid "Pixel-Pro" tier (subscription) later. Pixel-Lite is the free tier, so keep features that should stay free fully client-side and avoid decisions that block adding accounts/paywalled features later.
 
 ## Stack
 Vite + TypeScript (vanilla, no framework). Compression runs in a Web Worker via OffscreenCanvas. ZIP via `fflate`.
 
 ## Layout
 - `src/main.ts`: all UI (markup, mode/platform picker, Fine-tune/Extras/Filters panels, result cards, ZIP, remove/clear)
+- `src/strip-ui.ts`: the Metadata stripper screen (second tool, `#strip` in the URL; header tabs switch tools)
+- `src/lib/strip.ts`: lossless JPEG metadata stripper (byte-level, no re-encode). Unit-tested in `strip.test.ts`
+- `src/ui-utils.ts`: shared `fmt`, `esc`, `icon`
 - `src/compare.ts`: full-screen before/after viewer (Slider and Flip modes)
 - `src/lib/compress.ts`: decode once, step down, apply effects, encode JPEG
 - `src/lib/effects.ts`: pixel effects (filter, white balance, clarity, sharpen, grain), applied in that order
@@ -36,6 +40,24 @@ Vite + TypeScript (vanilla, no framework). Compression runs in a Web Worker via 
   when the target changes.
 - Settings are snapshotted when photos are dropped and only affect photos added next.
 - Finished cards show tags for anything changed from defaults (Fine-tune / Extras / Filter).
+
+## Metadata stripper (for professionals; likely the base of the future Pixel-Pro tier)
+- Separate tool from the compressor. It never decodes or re-encodes pixels: the scan data (first SOS to the real EOI) is
+  copied byte-for-byte, and each result re-reads the output to verify (shows "Image data unchanged · verified").
+- Options: GPS location, Camera & settings, Keep copyright & credit. GPS-only zeroes the GPS block in place (every other
+  EXIF offset stays valid). Camera removal rebuilds a minimal EXIF (orientation, Artist/Copyright if kept, GPS if kept,
+  colour space only when there is no ICC profile).
+- Always removed when either option is on: XMP (Lightroom edit history), IPTC, comments, other APPn segments, data after EOI
+  (this also drops phone gain maps / previews). Always kept: image data, ICC profile, JFIF, Adobe segment, orientation.
+- JPEG only. PNG/WebP/HEIC are not supported yet; the UI says so. Unreadable EXIF is removed entirely with a warning.
+- Each card lists everything found in the file and whether it was removed or kept.
+
+## Batch processing is a planned Pixel-Pro feature (held back, not removed)
+- `src/config.ts` has `FEATURES.batch = false`. While false, both tools take one photo at a time: the file picker is
+  single-select, a multi-file drop processes only the first file and shows a "coming soon with Pixel-Pro" note, and the
+  bulk actions (Download all as ZIP, Clear all) are hidden. A "PRO · Batch processing, coming soon" pill sits under each dropzone.
+- All batch code (queueing, ZIP, Clear all) is still in place. Set `batch: true` to re-enable everything.
+- Photos can still be added one after another; results accumulate and each has its own download and remove button.
 
 ## Gotchas
 - Grain (Extras slider and the Reel filter) makes files much larger; the UI warns about this.

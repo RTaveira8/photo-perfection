@@ -4,19 +4,10 @@ import { BASIC, SOCIAL } from './lib/presets';
 import { openCompare } from './compare';
 import { zipSync } from 'fflate';
 import { FILTERS } from './lib/filters';
+import { mountStrip } from './strip-ui';
 
-const fmt = (b: number) => (b >= 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1e3))} KB`);
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
-
-const icon = {
-  upload: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>`,
-  lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`,
-  pin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><path d="M4 4l16 16"/></svg>`,
-  bolt: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z"/></svg>`,
-  compare: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M12 5v14M8 10l-2 2 2 2M16 10l2 2-2 2"/></svg>`,
-  close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
-  down: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>`,
-};
+import { fmt, esc, icon, limitBatch, batchSoon } from './ui-utils';
+import { FEATURES } from './config';
 
 // Finishing touches. Slider value -> effect amount via `scale`. All default to off, except
 // Sharpen, which defaults to the selected preset's recommendation.
@@ -33,11 +24,17 @@ const app = document.getElementById('app')!;
 app.innerHTML = `
   <div class="glow" aria-hidden="true"></div>
   <header class="nav">
-    <div class="brand"><span class="mark"></span>PixelLite</div>
+    <div class="brand"><span class="mark"></span>Pixel-Lite</div>
+    <nav class="tabs" aria-label="Tools">
+      <a href="#compress" data-tab="compress">Compress</a>
+      <a href="#strip" data-tab="strip">Metadata Stripper</a>
+    </nav>
     <span class="nav-note">${icon.lock} Processed on your device</span>
   </header>
 
-  <main>
+  <main id="view-strip" hidden></main>
+
+  <main id="view-compress">
     <section class="hero">
       <p class="eyebrow">Image optimization</p>
       <h1>Smaller photos.<br /><em>Nothing lost</em> to the eye.</h1>
@@ -112,11 +109,13 @@ app.innerHTML = `
     </details>
 
     <label id="drop" class="drop" tabindex="0">
-      <input id="file" type="file" accept="image/*" multiple hidden />
+      <input id="file" type="file" accept="image/*" ${FEATURES.batch ? 'multiple' : ''} hidden />
       <span class="drop-icon">${icon.upload}</span>
       <span class="drop-title">Drop your photos here</span>
       <span class="drop-sub">or <u>browse your files</u> · JPEG, PNG, WebP</span>
+      ${batchSoon}
     </label>
+    <p id="batch-note" class="batch-note" hidden></p>
 
     <ul class="features">
       <li>${icon.lock}<div><b>100% private</b><span>Photos never leave your browser.</span></div></li>
@@ -129,7 +128,7 @@ app.innerHTML = `
     <div id="results" class="results"></div>
   </main>
 
-  <footer class="foot">PixelLite · Your photos stay yours.</footer>`;
+  <footer class="foot">Pixel-Lite · Your photos stay yours.</footer>`;
 
 const results = document.getElementById('results')!;
 const summary = document.getElementById('summary')!;
@@ -310,7 +309,7 @@ zipBtn.onclick = async () => {
     // JPEGs are already compressed, so store them (level 0) rather than waste time deflating.
     const zip = zipSync(files, { level: 0 });
     const url = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
-    const a = Object.assign(document.createElement('a'), { href: url, download: 'pixellite-photos.zip' });
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'pixel-lite-photos.zip' });
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
   } finally {
@@ -320,7 +319,8 @@ zipBtn.onclick = async () => {
 
 function updateSummary() {
   const recs = [...records.values()];
-  summary.hidden = actions.hidden = !recs.length;
+  summary.hidden = !recs.length;
+  actions.hidden = !recs.length || !FEATURES.batch; // ZIP-all / Clear all are batch features
   if (!recs.length) return;
   const totals = { files: recs.length, before: recs.reduce((n, r) => n + r.before, 0), after: recs.reduce((n, r) => n + r.after, 0) };
   const saved = Math.round((1 - totals.after / totals.before) * 100);
@@ -339,7 +339,8 @@ async function handle(files: FileList | File[]) {
   // Snapshot the settings once, so changing a slider mid-batch does not affect queued photos.
   const preset = currentPreset();
   const applied = describeApplied();
-  for (const file of Array.from(files).filter((f) => f.type.startsWith('image/'))) {
+  const queue = limitBatch(Array.from(files).filter((f) => f.type.startsWith('image/')), document.getElementById('batch-note')!);
+  for (const file of queue) {
     const name = esc(file.name);
     const card = document.createElement('article');
     card.className = 'card loading';
@@ -424,3 +425,18 @@ drop.addEventListener('drop', (e) => {
   e.preventDefault();
   if (e.dataTransfer) handle(e.dataTransfer.files);
 });
+
+// Two tools, one page: Compress (default) and the Pro-oriented Metadata stripper, switched by the URL hash.
+mountStrip(document.getElementById('view-strip')!);
+function route() {
+  const strip = location.hash === '#strip';
+  document.getElementById('view-strip')!.hidden = !strip;
+  document.getElementById('view-compress')!.hidden = strip;
+  document.querySelectorAll<HTMLElement>('[data-tab]').forEach((a) => {
+    if ((a.dataset.tab === 'strip') === strip) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  });
+  document.title = strip ? 'Metadata Stripper · Pixel-Lite' : 'Pixel-Lite';
+}
+window.addEventListener('hashchange', route);
+route();
