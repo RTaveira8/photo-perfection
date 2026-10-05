@@ -154,8 +154,9 @@ export function applyEffects(canvas: OffscreenCanvas, fx: Effects) {
   }
 
   // 4. Grain last, so nothing sharpens it away. Lighter in deep shadows/highlights.
-  if (fx.grain) {
-    const amp = fx.grain * 34;
+  const grain = (fx.grain ?? 0) + (filter?.params.grain ?? 0) * (fx.filterAmount ?? 1);
+  if (grain) {
+    const amp = grain * 34;
     for (let i = 0; i < d.length; i += 4) {
       const l = (d[i] + d[i + 1] + d[i + 2]) / 765;
       const noise = (Math.random() + Math.random() - 1) * amp * (1 - (2 * l - 1) ** 2 * 0.7);

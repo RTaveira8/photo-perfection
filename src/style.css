@@ -275,3 +275,8 @@ body.modal-open { overflow: hidden; }
 /* Optional badge */
 .tune summary .ttl { order: 0; display: inline-flex; align-items: center; gap: 8px; color: var(--text); font-weight: 600; font-size: 14px; }
 .opt { padding: 1px 7px; border: 1px solid var(--line); border-radius: 99px; color: var(--muted); font: 500 10px var(--sans); letter-spacing: 0.08em; text-transform: uppercase; font-style: normal; }
+
+/* Applied settings on finished cards */
+.applied { display: flex; flex-wrap: wrap; gap: 6px; margin: -6px 0 12px; }
+.applied span { padding: 2px 9px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface-2); color: var(--muted); font-size: 12px; }
+.applied b { margin-right: 6px; color: var(--accent); font-weight: 600; }

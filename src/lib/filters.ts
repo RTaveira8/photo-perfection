@@ -20,6 +20,8 @@ export interface FilterParams {
   highlights?: [number, number, number];
   /** 0..1. Darkens the corners. */
   vignette?: number;
+  /** 0..1. Film grain, added on top of the Grain slider and scaled by Intensity. */
+  grain?: number;
 }
 
 export interface Filter {
@@ -32,6 +34,23 @@ export interface Filter {
 }
 
 export const FILTERS: Filter[] = [
+  {
+    id: 'reel',
+    name: 'Reel',
+    blurb: 'Analog film: warm highlights, teal shadows, faded blacks, fine grain',
+    swatch: 'linear-gradient(135deg,#f2c48d,#b9926b 45%,#2f5d62)',
+    params: {
+      sat: 0.92,
+      contrast: 1.06,
+      warmth: 0.15,
+      tint: -0.05,
+      fade: 0.07,
+      shadows: [2, 9, 16],
+      highlights: [16, 6, -10],
+      vignette: 0.25,
+      grain: 0.3,
+    },
+  },
   {
     id: 'neon',
     name: 'Neon',

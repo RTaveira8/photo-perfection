@@ -97,6 +97,7 @@ app.innerHTML = `
             (f) => `<button class="chip" role="radio" aria-checked="false" data-filter="${f.id}" title="${f.blurb}" type="button"><i class="sw" style="background:${f.swatch}"></i>${f.name}</button>`,
           ).join('')}
         </div>
+        <p id="filter-hint" class="tune-hint"></p>
         <div id="filter-amt-row" class="slider" hidden>
           <div class="srow"><label for="filter-amt">Intensity</label><b id="filter-amt-val">100</b></div>
           <input id="filter-amt" type="range" min="0" max="100" step="1" value="100" />
@@ -229,16 +230,31 @@ function syncFilter() {
   state.textContent = f ? `${f.name} · ${amtEl.value}%` : 'None';
   state.classList.toggle('custom', !!f);
   document.getElementById('filter-amt-row')!.hidden = !f;
+  document.getElementById('filter-hint')!.textContent = f?.params.grain ? 'Includes fine grain, which makes files larger.' : '';
   document.getElementById('filter-amt-val')!.textContent = `${amtEl.value}%`;
 }
 filterBtns.forEach((b) => (b.onclick = () => ((filterId = b.dataset.filter!), syncFilter())));
 amtEl.oninput = syncFilter;
 
+/** What the user changed from the defaults, shown on each finished card so it's clear what was applied. */
+function describeApplied(): { kind: string; text: string }[] {
+  const out: { kind: string; text: string }[] = [];
+  const parts: string[] = [];
+  if (+qEl.value !== Math.round(target.preset.quality * 100)) parts.push(`Quality ${qEl.value}%`);
+  if (+szEl.value !== target.preset.longEdge) parts.push(`${szEl.value} px`);
+  if (parts.length) out.push({ kind: 'Fine-tune', text: parts.join(' · ') });
+  const extras = EXTRAS.filter((e) => +exEl(e.id).value).map((e) => `${e.label} ${signed(+exEl(e.id).value, e)}`);
+  if (extras.length) out.push({ kind: 'Extras', text: extras.join(' · ') });
+  const f = FILTERS.find((x) => x.id === filterId);
+  if (f) out.push({ kind: 'Filter', text: `${f.name} ${amtEl.value}%` });
+  return out;
+}
+
 function currentPreset() {
   if (!isCustom() && !exChanged() && !filterId) return target.preset;
   const fx = Object.fromEntries(EXTRAS.map((e) => [e.id, +exEl(e.id).value * e.scale]));
   fx.sharpen += target.preset.sharpen ?? 0;
-  return { ...target.preset, ...fx, filter: filterId || undefined, filterAmount: +amtEl.value / 100, label: `${target.preset.label} (custom)`, quality: +qEl.value / 100, longEdge: +szEl.value };
+  return { ...target.preset, ...fx, filter: filterId || undefined, filterAmount: +amtEl.value / 100, quality: +qEl.value / 100, longEdge: +szEl.value };
 }
 typeBtns.forEach((b) => (b.onclick = () => setTarget(b.dataset.mode === 'social' ? SOCIAL[0] : BASIC)));
 platformBtns.forEach((b) => (b.onclick = () => setTarget(SOCIAL.find((t) => t.preset.id === b.dataset.target)!)));
@@ -286,6 +302,9 @@ function updateSummary() {
 }
 
 async function handle(files: FileList | File[]) {
+  // Snapshot the settings once, so changing a slider mid-batch does not affect queued photos.
+  const preset = currentPreset();
+  const applied = describeApplied();
   for (const file of Array.from(files).filter((f) => f.type.startsWith('image/'))) {
     const name = esc(file.name);
     const card = document.createElement('article');
@@ -293,10 +312,13 @@ async function handle(files: FileList | File[]) {
     card.innerHTML = `<div class="thumb skeleton"></div><div class="info"><h2>${name}</h2><p class="meta">Optimizing…</p></div>`;
     results.prepend(card);
     try {
-      const r = await compressInWorker(file, [currentPreset()]);
+      const r = await compressInWorker(file, [preset]);
       const base = esc(file.name.replace(/\.[^.]+$/, ''));
       const display = r.outputs[0];
       const previewUrl = URL.createObjectURL(display.blob);
+      const appliedHtml = applied.length
+        ? `<p class="applied">${applied.map((a) => `<span><b>${a.kind}</b>${esc(a.text)}</span>`).join('')}</p>`
+        : '';
       const rows = r.outputs
         .map((o) => {
           const url = URL.createObjectURL(o.blob);
@@ -319,6 +341,7 @@ async function handle(files: FileList | File[]) {
         <div class="info">
           <h2>${name}</h2>
           <p class="meta">Original ${r.original.width} × ${r.original.height} · ${fmt(r.original.bytes)} <span class="tag">${icon.pin} Location data removed</span></p>
+          ${appliedHtml}
           <ul class="outputs">${rows}</ul>
         </div>`;
       card.querySelector<HTMLElement>('.thumb-btn')!.onclick = () =>
