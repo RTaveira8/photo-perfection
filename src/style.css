@@ -280,3 +280,33 @@ body.modal-open { overflow: hidden; }
 .applied { display: flex; flex-wrap: wrap; gap: 6px; margin: -6px 0 12px; }
 .applied span { padding: 2px 9px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface-2); color: var(--muted); font-size: 12px; }
 .applied b { margin-right: 6px; color: var(--accent); font-weight: 600; }
+
+/* Compare: mode switch + flip view */
+.modal-bar { gap: 12px; }
+.modal-bar b { flex: 1; }
+.seg { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); }
+.seg button { padding: 5px 14px; border: 0; border-radius: 99px; background: transparent; color: var(--muted); font: 500 13px var(--sans); cursor: pointer; transition: background 0.15s, color 0.15s; }
+.seg button:hover { color: var(--text); }
+.seg button.on { background: var(--accent-soft); color: var(--accent); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.flipbar { display: flex; justify-content: center; max-width: 1200px; width: 100%; margin: 0 auto; }
+.flipbar[hidden] { display: none; }
+.stage.flip { cursor: pointer; }
+.stage.flip .before { clip-path: none; }
+.stage.flip[data-show='after'] .before { visibility: hidden; }
+.stage.flip .divider, .stage.flip .range { display: none; }
+.stage.flip .label.r { display: none; }
+.stage.flip[data-show='after'] .label.l { display: none; }
+.stage.flip[data-show='after'] .label.r { display: block; }
+
+/* Remove / clear */
+.card { position: relative; }
+.remove { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--muted); font-size: 14px; cursor: pointer; opacity: 0.7; transition: opacity 0.15s, color 0.15s, border-color 0.15s; }
+.card:hover .remove, .remove:focus-visible { opacity: 1; }
+.remove:hover { color: #d4574b; border-color: #d4574b; }
+.remove:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.info h2 { padding-right: 36px; }
+.actions { gap: 10px; align-items: center; }
+.ghost { padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: transparent; color: var(--muted); font: 500 14px var(--sans); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+.ghost:hover { color: var(--text); border-color: var(--muted); }
+.ghost:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

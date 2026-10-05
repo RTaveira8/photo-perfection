@@ -14,6 +14,7 @@ const icon = {
   pin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><path d="M4 4l16 16"/></svg>`,
   bolt: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z"/></svg>`,
   compare: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M12 5v14M8 10l-2 2 2 2M16 10l2 2-2 2"/></svg>`,
+  close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
   down: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>`,
 };
 
@@ -119,7 +120,7 @@ app.innerHTML = `
     </ul>
 
     <div id="summary" class="summary" hidden></div>
-    <div id="actions" class="actions" hidden><button id="zip" class="zip">${icon.down}<span></span></button></div>
+    <div id="actions" class="actions" hidden><button id="clear" class="ghost" type="button">Clear all</button><button id="zip" class="zip">${icon.down}<span></span></button></div>
     <div id="results" class="results"></div>
   </main>
 
@@ -260,18 +261,31 @@ typeBtns.forEach((b) => (b.onclick = () => setTarget(b.dataset.mode === 'social'
 platformBtns.forEach((b) => (b.onclick = () => setTarget(SOCIAL.find((t) => t.preset.id === b.dataset.target)!)));
 setTarget(BASIC);
 
-const totals = { files: 0, before: 0, after: 0 };
+// One record per finished card, so removing a card cleanly removes its share of the totals and the ZIP.
+interface Rec { before: number; after: number; zip: { name: string; blob: Blob }[]; urls: string[] }
+const records = new Map<HTMLElement, Rec>();
+const zipItems = () => [...records.values()].flatMap((r) => r.zip);
 
-const zipItems: { name: string; blob: Blob }[] = [];
+function removeCard(card: HTMLElement) {
+  records.get(card)?.urls.forEach((u) => URL.revokeObjectURL(u));
+  records.delete(card);
+  card.remove();
+  updateSummary();
+}
 const actions = document.getElementById('actions')!;
 const zipBtn = document.getElementById('zip') as HTMLButtonElement;
+
+(document.getElementById('clear') as HTMLButtonElement).onclick = () => {
+  [...records.keys()].forEach(removeCard);
+  results.querySelectorAll<HTMLElement>('.card:not(.loading)').forEach((c) => c.remove());
+};
 
 zipBtn.onclick = async () => {
   zipBtn.disabled = true;
   try {
     const files: Record<string, Uint8Array> = {};
     const seen = new Map<string, number>();
-    for (const { name, blob } of zipItems) {
+    for (const { name, blob } of zipItems()) {
       const n = seen.get(name) ?? 0;
       seen.set(name, n + 1);
       const unique = n ? name.replace(/\.jpg$/, `-${n + 1}.jpg`) : name;
@@ -289,17 +303,21 @@ zipBtn.onclick = async () => {
 };
 
 function updateSummary() {
-  if (!totals.files) return;
+  const recs = [...records.values()];
+  summary.hidden = actions.hidden = !recs.length;
+  if (!recs.length) return;
+  const totals = { files: recs.length, before: recs.reduce((n, r) => n + r.before, 0), after: recs.reduce((n, r) => n + r.after, 0) };
   const saved = Math.round((1 - totals.after / totals.before) * 100);
-  summary.hidden = false;
-  actions.hidden = false;
-  zipBtn.querySelector('span')!.textContent = `Download all as ZIP (${zipItems.length} ${zipItems.length === 1 ? 'file' : 'files'})`;
+  const count = zipItems().length;
+  zipBtn.querySelector('span')!.textContent = `Download all as ZIP (${count} ${count === 1 ? 'file' : 'files'})`;
   summary.innerHTML = `
     <div><b>${totals.files}</b><span>${totals.files === 1 ? 'photo' : 'photos'}</span></div>
     <div><b>${fmt(totals.before)}</b><span>before</span></div>
     <div><b>${fmt(totals.after)}</b><span>after</span></div>
     <div class="accent"><b>−${saved}%</b><span>saved</span></div>`;
 }
+
+const removeBtn = `<button class="remove" type="button" aria-label="Remove this photo" title="Remove">${icon.close}</button>`;
 
 async function handle(files: FileList | File[]) {
   // Snapshot the settings once, so changing a slider mid-batch does not affect queued photos.
@@ -316,12 +334,14 @@ async function handle(files: FileList | File[]) {
       const base = esc(file.name.replace(/\.[^.]+$/, ''));
       const display = r.outputs[0];
       const previewUrl = URL.createObjectURL(display.blob);
+      const urls = [previewUrl];
       const appliedHtml = applied.length
         ? `<p class="applied">${applied.map((a) => `<span><b>${a.kind}</b>${esc(a.text)}</span>`).join('')}</p>`
         : '';
       const rows = r.outputs
         .map((o) => {
           const url = URL.createObjectURL(o.blob);
+          urls.push(url);
           const saved = Math.round((1 - o.blob.size / r.original.bytes) * 100);
           return `<li>
             <div class="row-main"><b>${o.preset.label}</b><span>${o.width} × ${o.height}</span></div>
@@ -333,6 +353,7 @@ async function handle(files: FileList | File[]) {
         .join('');
       card.className = 'card';
       const originalUrl = URL.createObjectURL(file);
+      urls.push(originalUrl);
       card.innerHTML = `
         <button class="thumb-btn" aria-label="Compare before and after">
           <img class="thumb" src="${previewUrl}" alt="" />
@@ -343,7 +364,9 @@ async function handle(files: FileList | File[]) {
           <p class="meta">Original ${r.original.width} × ${r.original.height} · ${fmt(r.original.bytes)} <span class="tag">${icon.pin} Location data removed</span></p>
           ${appliedHtml}
           <ul class="outputs">${rows}</ul>
-        </div>`;
+        </div>
+        ${removeBtn}`;
+      card.querySelector<HTMLElement>('.remove')!.onclick = () => removeCard(card);
       card.querySelector<HTMLElement>('.thumb-btn')!.onclick = () =>
         openCompare({
           name: file.name,
@@ -354,14 +377,17 @@ async function handle(files: FileList | File[]) {
           outputLabel: display.preset.label,
         });
       const stem = file.name.replace(/\.[^.]+$/, '');
-      for (const o of r.outputs) zipItems.push({ name: `${stem}-${o.preset.id}.jpg`, blob: o.blob });
-      totals.files++;
-      totals.before += r.original.bytes;
-      totals.after += display.blob.size;
+      records.set(card, {
+        before: r.original.bytes,
+        after: display.blob.size,
+        zip: r.outputs.map((o) => ({ name: `${stem}-${o.preset.id}.jpg`, blob: o.blob })),
+        urls,
+      });
       updateSummary();
     } catch (e) {
       card.className = 'card';
-      card.innerHTML = `<div class="info"><h2>${name}</h2><p class="meta err">Couldn't process this file: ${esc((e as Error).message)}</p></div>`;
+      card.innerHTML = `<div class="info"><h2>${name}</h2><p class="meta err">Couldn't process this file: ${esc((e as Error).message)}</p></div>${removeBtn}`;
+      card.querySelector<HTMLElement>('.remove')!.onclick = () => removeCard(card);
     }
   }
 }
