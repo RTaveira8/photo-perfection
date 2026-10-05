@@ -1,0 +1,10 @@
+:root { font-family: system-ui, sans-serif; color-scheme: light dark; }
+body { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+.sub { opacity: .7; }
+#drop { display: block; padding: 48px; border: 2px dashed currentColor; border-radius: 12px; text-align: center; cursor: pointer; opacity: .8; }
+section { margin-top: 24px; }
+.grid { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+figure { margin: 0; max-width: 100%; }
+img { max-width: 100%; height: auto; border-radius: 6px; }
+figcaption { font-size: 14px; margin-top: 4px; }
+.err { color: #c33; }
