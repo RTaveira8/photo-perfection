@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Shrink photos without making them look worse. Private, in-browser, no uploads." />
+    <meta name="robots" content="noindex, nofollow" /> <!-- temporary test site: remove at public launch (also public/robots.txt) -->
     <title>Pixel-Lite</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232dd4bf'>%3Crect x='0' y='0' width='6' height='6' rx='1.6' fill-opacity='1'/%3E%3Crect x='9' y='0' width='6' height='6' rx='1.6' fill-opacity='0.78'/%3E%3Crect x='18' y='0' width='6' height='6' rx='1.6' fill-opacity='0.5'/%3E%3Crect x='0' y='9' width='6' height='6' rx='1.6' fill-opacity='0.78'/%3E%3Crect x='9' y='9' width='6' height='6' rx='1.6' fill-opacity='0.5'/%3E%3Crect x='18' y='9' width='6' height='6' rx='1.6' fill-opacity='0.28'/%3E%3Crect x='0' y='18' width='6' height='6' rx='1.6' fill-opacity='0.5'/%3E%3Crect x='9' y='18' width='6' height='6' rx='1.6' fill-opacity='0.28'/%3E%3Crect x='18' y='18' width='6' height='6' rx='1.6' fill-opacity='0.12'/%3E</svg>" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -21,6 +22,7 @@
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+    <noscript>Pixel-Lite needs JavaScript to run in your browser. Your photos are never uploaded.</noscript>
+    <script type="module" src="/src/boot.ts"></script>
   </body>
 </html>

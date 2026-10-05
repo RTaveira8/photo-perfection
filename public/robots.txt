@@ -1,0 +1,3 @@
+# Temporary test site: keep it out of search engines. Remove this (and the noindex meta tag in index.html) at public launch.
+User-agent: *
+Disallow: /

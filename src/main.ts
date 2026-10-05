@@ -1,4 +1,3 @@
-import './style.css';
 import { compressInWorker } from './lib/client';
 import { BASIC, SOCIAL } from './lib/presets';
 import { openCompare } from './compare';
@@ -9,6 +8,7 @@ import { mountStrip } from './strip-ui';
 import { fmt, esc, icon, limitBatch, batchSoon, logoMark, wordmark } from './ui-utils';
 import { FEATURES } from './config';
 import { initTheme } from './theme';
+import { support } from './support';
 
 // Finishing touches. Slider value -> effect amount via `scale`. All default to off, except
 // Sharpen, which defaults to the selected preset's recommendation.
@@ -44,6 +44,8 @@ app.innerHTML = `
       <h1>Smaller photos.<br /><em>Nothing lost</em> to the eye.</h1>
       <p class="lede">Cut file sizes by up to 97% with no visible difference, and strip hidden location data, all without a single upload.</p>
     </section>
+
+    ${support.compress ? '' : `<div class="compat-warn" role="alert"><b>Compression is not available in this browser.</b> It needs a newer browser (for example Safari 16.4 or later, or a recent Chrome, Edge or Firefox). <a href="#strip">Use the Metadata Stripper instead &rarr;</a></div>`}
 
     <div class="modes two" role="radiogroup" aria-label="Compression type">
       <button class="mode on" role="radio" aria-checked="true" data-mode="basic"><b>Basic compression</b><span>${BASIC.blurb}</span></button>
@@ -138,6 +140,10 @@ const results = document.getElementById('results')!;
 const summary = document.getElementById('summary')!;
 const input = document.getElementById('file') as HTMLInputElement;
 const drop = document.getElementById('drop')!;
+if (!support.compress) {
+  drop.classList.add('disabled');
+  input.disabled = true;
+}
 
 let target = BASIC;
 const modeNote = document.getElementById('mode-note')!;
@@ -340,6 +346,7 @@ function updateSummary() {
 const removeBtn = `<button class="remove" type="button" aria-label="Remove this photo" title="Remove">${icon.close}</button>`;
 
 async function handle(files: FileList | File[]) {
+  if (!support.compress) return;
   // Snapshot the settings once, so changing a slider mid-batch does not affect queued photos.
   const preset = currentPreset();
   const applied = describeApplied();

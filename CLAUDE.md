@@ -12,6 +12,9 @@ Vite + TypeScript (vanilla, no framework). Compression runs in a Web Worker via 
 - `src/main.ts`: all UI (markup, mode/platform picker, Fine-tune/Extras/Filters panels, result cards, ZIP, remove/clear)
 - `src/strip-ui.ts`: the Metadata stripper screen (second tool, `#strip` in the URL; header tabs switch tools)
 - `src/lib/strip.ts`: lossless JPEG metadata stripper (byte-level, no re-encode). Unit-tested in `strip.test.ts`
+- `src/boot.ts` (the real entry, loaded by `index.html`): runs the browser check in `src/support.ts`, then dynamically imports `main.ts`.
+  Browser too old for both tools: full-page message (`unsupported.ts`). Too old only for the compressor (older Safari, no OffscreenCanvas):
+  banner + disabled dropzone, Metadata Stripper still works. QA: add `?forceUnsupported=compress` or `=all` to the URL.
 - `src/theme.ts`: light/dark toggle (header button). No saved choice = follow the system; a click saves `pixel-lite-theme` in localStorage
   and sets `data-theme` on `<html>`; an inline script in `index.html` applies it before first paint. Theme colours are CSS variables
   in `style.css` (the dark set appears twice: `[data-theme='dark']` and the system media query, because CSS can't share them).
@@ -66,6 +69,11 @@ Vite + TypeScript (vanilla, no framework). Compression runs in a Web Worker via 
   bulk actions (Download all as ZIP, Clear all) are hidden. A "PRO · Batch processing, coming soon" pill sits under each dropzone.
 - All batch code (queueing, ZIP, Clear all) is still in place. Set `batch: true` to re-enable everything.
 - Photos can still be added one after another; results accumulate and each has its own download and remove button.
+
+## Temporary test site
+- `index.html` has `<meta name="robots" content="noindex, nofollow">` and `public/robots.txt` disallows everything, so the test deployment stays out of search.
+  REMOVE BOTH at public launch. Hosting plan: static host (Netlify/Vercel/Cloudflare Pages) building `npm run build` -> `dist`. Hash routing (`#strip`) needs no
+  server rewrites. Avoid GitHub Pages unless `base` is set in a Vite config (it serves under `/pixel-lite/`).
 
 ## Gotchas
 - Grain (Extras slider and the Reel filter) makes files much larger; the UI warns about this.

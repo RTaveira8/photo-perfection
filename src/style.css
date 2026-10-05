@@ -398,3 +398,8 @@ main[hidden] { display: none; }
 .theme-toggle .i-sun, .theme-toggle .i-moon { display: none; line-height: 0; }
 .theme-toggle[data-mode='dark'] .i-sun { display: block; }   /* in dark mode, offer the sun */
 .theme-toggle[data-mode='light'] .i-moon { display: block; } /* in light mode, offer the moon */
+
+/* Compatibility */
+.compat-warn { margin: 0 0 14px; padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 14px; background: var(--accent-soft); font-size: 14px; line-height: 1.5; }
+.compat-warn a { color: var(--accent); font-weight: 600; text-underline-offset: 3px; }
+.drop.disabled { opacity: 0.45; pointer-events: none; }
