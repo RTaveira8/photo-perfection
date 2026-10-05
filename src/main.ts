@@ -3,6 +3,7 @@ import { compressInWorker } from './lib/client';
 import { BASIC, SOCIAL } from './lib/presets';
 import { openCompare } from './compare';
 import { zipSync } from 'fflate';
+import { FILTERS } from './lib/filters';
 
 const fmt = (b: number) => (b >= 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1e3))} KB`);
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -54,7 +55,7 @@ app.innerHTML = `
     <p id="mode-note" class="mode-note"></p>
 
     <details class="tune">
-      <summary>Fine-tune <span id="tune-state">Using recommended settings</span></summary>
+      <summary><b class="ttl">Fine-tune <em class="opt">Optional</em></b><span id="tune-state">Using recommended settings</span></summary>
       <div class="tune-body">
         <div class="slider">
           <div class="srow"><label for="q">Quality</label><span id="q-rec" class="rec"></span><b id="q-val"></b></div>
@@ -72,7 +73,7 @@ app.innerHTML = `
     </details>
 
     <details class="tune">
-      <summary>Extras <span id="extras-state">None applied</span></summary>
+      <summary><b class="ttl">Extras <em class="opt">Optional</em></b><span id="extras-state">None applied</span></summary>
       <div class="tune-body extras">
         ${EXTRAS.map(
           (e) => `<div class="slider">
@@ -83,6 +84,22 @@ app.innerHTML = `
         <div id="extras-foot" class="tune-foot" hidden>
           <p id="extras-hint" class="tune-hint"></p>
           <button id="extras-reset" class="link" type="button">Reset extras</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="tune">
+      <summary><b class="ttl">Filters <em class="opt">Optional</em></b><span id="filter-state">None</span></summary>
+      <div class="tune-body filters">
+        <div class="chips" role="radiogroup" aria-label="Filter">
+          <button class="chip on" role="radio" aria-checked="true" data-filter="" type="button"><i class="sw none"></i>None</button>
+          ${FILTERS.map(
+            (f) => `<button class="chip" role="radio" aria-checked="false" data-filter="${f.id}" title="${f.blurb}" type="button"><i class="sw" style="background:${f.swatch}"></i>${f.name}</button>`,
+          ).join('')}
+        </div>
+        <div id="filter-amt-row" class="slider" hidden>
+          <div class="srow"><label for="filter-amt">Intensity</label><b id="filter-amt-val">100</b></div>
+          <input id="filter-amt" type="range" min="0" max="100" step="1" value="100" />
         </div>
       </div>
     </details>
@@ -166,7 +183,8 @@ document.getElementById('tune-reset')!.onclick = resetTune;
 
 // Extras sliders
 const exEl = (id: ExtraId) => document.getElementById(`ex-${id}`) as HTMLInputElement;
-const exRec = (id: ExtraId) => (id === 'sharpen' ? Math.round((target.preset.sharpen ?? 0) * 200) : 0);
+// Extras always start with nothing applied. Social presets add their own light sharpening on top (see currentPreset).
+const exRec = (_id: ExtraId) => 0;
 const exChanged = () => EXTRAS.some((e) => +exEl(e.id).value !== exRec(e.id));
 const signed = (v: number, e: (typeof EXTRAS)[number]) => (e.min < 0 && v > 0 ? `+${v}` : String(v));
 
@@ -175,7 +193,7 @@ function syncExtras() {
     const v = +exEl(e.id).value;
     document.getElementById(`ex-${e.id}-val`)!.textContent = signed(v, e);
     const rec = exRec(e.id);
-    document.getElementById(`ex-${e.id}-rec`)!.textContent = rec ? `recommended ${rec}` : '';
+    document.getElementById(`ex-${e.id}-rec`)!.textContent = rec ? `recommended ${rec}` : e.id === 'sharpen' && target !== BASIC ? 'already includes light sharpening' : '';
   }
   const changed = EXTRAS.filter((e) => +exEl(e.id).value !== exRec(e.id)).length;
   const active = EXTRAS.filter((e) => +exEl(e.id).value).length;
@@ -196,10 +214,31 @@ function resetExtras() {
 EXTRAS.forEach((e) => (exEl(e.id).oninput = syncExtras));
 document.getElementById('extras-reset')!.onclick = resetExtras;
 
+// Filters. A creative choice, so it persists when the mode changes.
+let filterId = '';
+const filterBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-filter]'));
+const amtEl = document.getElementById('filter-amt') as HTMLInputElement;
+function syncFilter() {
+  const f = FILTERS.find((x) => x.id === filterId);
+  filterBtns.forEach((b) => {
+    const on = b.dataset.filter === filterId;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-checked', String(on));
+  });
+  const state = document.getElementById('filter-state')!;
+  state.textContent = f ? `${f.name} · ${amtEl.value}%` : 'None';
+  state.classList.toggle('custom', !!f);
+  document.getElementById('filter-amt-row')!.hidden = !f;
+  document.getElementById('filter-amt-val')!.textContent = `${amtEl.value}%`;
+}
+filterBtns.forEach((b) => (b.onclick = () => ((filterId = b.dataset.filter!), syncFilter())));
+amtEl.oninput = syncFilter;
+
 function currentPreset() {
-  if (!isCustom() && !exChanged()) return target.preset;
+  if (!isCustom() && !exChanged() && !filterId) return target.preset;
   const fx = Object.fromEntries(EXTRAS.map((e) => [e.id, +exEl(e.id).value * e.scale]));
-  return { ...target.preset, ...fx, label: `${target.preset.label} (custom)`, quality: +qEl.value / 100, longEdge: +szEl.value };
+  fx.sharpen += target.preset.sharpen ?? 0;
+  return { ...target.preset, ...fx, filter: filterId || undefined, filterAmount: +amtEl.value / 100, label: `${target.preset.label} (custom)`, quality: +qEl.value / 100, longEdge: +szEl.value };
 }
 typeBtns.forEach((b) => (b.onclick = () => setTarget(b.dataset.mode === 'social' ? SOCIAL[0] : BASIC)));
 platformBtns.forEach((b) => (b.onclick = () => setTarget(SOCIAL.find((t) => t.preset.id === b.dataset.target)!)));
