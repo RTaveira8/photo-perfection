@@ -1,6 +1,7 @@
 import './style.css';
 import { compressInWorker } from './lib/client';
 import { PRESETS } from './lib/presets';
+import { openCompare } from './compare';
 
 const fmt = (b: number) => (b >= 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1e3))} KB`);
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -10,6 +11,7 @@ const icon = {
   lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`,
   pin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><path d="M4 4l16 16"/></svg>`,
   bolt: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z"/></svg>`,
+  compare: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M12 5v14M8 10l-2 2 2 2M16 10l2 2-2 2"/></svg>`,
   down: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>`,
 };
 
@@ -90,13 +92,26 @@ async function handle(files: FileList | File[]) {
         })
         .join('');
       card.className = 'card';
+      const originalUrl = URL.createObjectURL(file);
       card.innerHTML = `
-        <img class="thumb" src="${previewUrl}" alt="" />
+        <button class="thumb-btn" aria-label="Compare before and after">
+          <img class="thumb" src="${previewUrl}" alt="" />
+          <span class="thumb-cta">${icon.compare} Compare</span>
+        </button>
         <div class="info">
           <h2>${name}</h2>
           <p class="meta">Original ${r.original.width} × ${r.original.height} · ${fmt(r.original.bytes)} <span class="tag">${icon.pin} Location data removed</span></p>
           <ul class="outputs">${rows}</ul>
         </div>`;
+      card.querySelector<HTMLElement>('.thumb-btn')!.onclick = () =>
+        openCompare({
+          name: file.name,
+          originalUrl,
+          outputUrl: previewUrl,
+          originalSize: fmt(r.original.bytes),
+          outputSize: fmt(display.blob.size),
+          outputLabel: display.preset.label,
+        });
       totals.files++;
       totals.before += r.original.bytes;
       totals.after += display.blob.size;
