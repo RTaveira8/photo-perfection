@@ -1,4 +1,4 @@
-# Photo Perfection
+# Shred
 
 Client-side image optimizer: shrinks photos without visible quality loss, strips EXIF/GPS, no uploads.
 Starting brief: `docs/handoff.md` (from the Clutch project). It is a guide to refine, not a spec.
