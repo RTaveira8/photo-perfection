@@ -29,3 +29,8 @@ export function limitBatch<T extends File>(files: T[], note: HTMLElement): T[] {
 
 /** The small "PRO · coming soon" line shown under the dropzone while batch is off. */
 export const batchSoon = FEATURES.batch ? '' : '<span class="drop-soon"><b>PRO</b> Batch processing, coming soon</span>';
+
+/** Pixel-Lite logo mark: a 3x3 pixel grid dissolving toward one corner. Colour comes from the surrounding text colour. */
+export const logoMark = `<svg class="logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="0" y="0" width="6" height="6" rx="1.6" fill-opacity="1"/><rect x="9" y="0" width="6" height="6" rx="1.6" fill-opacity="0.78"/><rect x="18" y="0" width="6" height="6" rx="1.6" fill-opacity="0.5"/><rect x="0" y="9" width="6" height="6" rx="1.6" fill-opacity="0.78"/><rect x="9" y="9" width="6" height="6" rx="1.6" fill-opacity="0.5"/><rect x="18" y="9" width="6" height="6" rx="1.6" fill-opacity="0.28"/><rect x="0" y="18" width="6" height="6" rx="1.6" fill-opacity="0.5"/><rect x="9" y="18" width="6" height="6" rx="1.6" fill-opacity="0.28"/><rect x="18" y="18" width="6" height="6" rx="1.6" fill-opacity="0.12"/></svg>`;
+
+export const wordmark = `<span class="wm"><b>Pixel</b><i>-Lite</i></span>`;

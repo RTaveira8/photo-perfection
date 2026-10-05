@@ -6,7 +6,7 @@ import { zipSync } from 'fflate';
 import { FILTERS } from './lib/filters';
 import { mountStrip } from './strip-ui';
 
-import { fmt, esc, icon, limitBatch, batchSoon } from './ui-utils';
+import { fmt, esc, icon, limitBatch, batchSoon, logoMark, wordmark } from './ui-utils';
 import { FEATURES } from './config';
 
 // Finishing touches. Slider value -> effect amount via `scale`. All default to off, except
@@ -24,7 +24,7 @@ const app = document.getElementById('app')!;
 app.innerHTML = `
   <div class="glow" aria-hidden="true"></div>
   <header class="nav">
-    <div class="brand"><span class="mark"></span>Pixel-Lite</div>
+    <a class="brand" href="#compress" aria-label="Pixel-Lite home">${logoMark}${wordmark}</a>
     <nav class="tabs" aria-label="Tools">
       <a href="#compress" data-tab="compress">Compress</a>
       <a href="#strip" data-tab="strip">Metadata Stripper</a>
@@ -128,7 +128,7 @@ app.innerHTML = `
     <div id="results" class="results"></div>
   </main>
 
-  <footer class="foot">Pixel-Lite · Your photos stay yours.</footer>`;
+  <footer class="foot"><span class="foot-brand">${logoMark}${wordmark}</span><span>Your photos stay yours.</span></footer>`;
 
 const results = document.getElementById('results')!;
 const summary = document.getElementById('summary')!;

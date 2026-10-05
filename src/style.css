@@ -54,11 +54,13 @@ svg { width: 1em; height: 1em; flex: none; }
 .nav, main, .foot { position: relative; z-index: 1; max-width: 880px; margin: 0 auto; padding-inline: 20px; }
 
 .nav { display: flex; align-items: center; justify-content: space-between; padding-block: 24px; }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; }
-.mark {
-  width: 18px; height: 18px; border-radius: 5px;
-  background: conic-gradient(from 210deg, var(--accent), var(--text) 60%, var(--accent));
-}
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; }
+.brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 8px; }
+.logo { width: 24px; height: 24px; color: var(--accent); flex: none; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.brand:hover .logo { transform: rotate(-8deg) scale(1.06); }
+.wm { font-size: 19px; line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
+.wm b { font-family: var(--sans); font-weight: 600; }
+.wm i { font-family: var(--serif); font-weight: 500; font-style: italic; color: var(--accent); letter-spacing: -0.01em; }
 .nav-note { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
 
 .hero { text-align: center; padding: 56px 0 40px; }
@@ -366,3 +368,9 @@ main[hidden] { display: none; }
 .drop-soon b { padding: 1px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; }
 .batch-note { margin: 10px 4px 0; color: var(--accent); font-size: 13px; }
 .batch-note[hidden] { display: none; }
+
+/* Footer brand */
+.foot { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.foot-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--text); opacity: 0.85; }
+.foot-brand .logo { width: 18px; height: 18px; }
+.foot-brand .wm { font-size: 15px; }

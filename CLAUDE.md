@@ -2,7 +2,7 @@
 
 Client-side image optimizer: shrinks photos without visible quality loss, strips EXIF/GPS, no uploads.
 Starting brief: `docs/handoff.md` (from the Clutch project). It is a guide to refine, not a spec.
-Repo: github.com/RTaveira8/photo-perfection (public). The product name is "Pixel-Lite" (renamed from "Shred", then "PixelLite"); the GitHub repo and local folder are still named photo-perfection.
+Repo: github.com/RTaveira8/pixel-lite (public; renamed from photo-perfection, GitHub redirects the old URL). The product name is "Pixel-Lite" (renamed from "Shred", then "PixelLite"). The local folder is still named Photo-Perfection.
 Planned: a paid "Pixel-Pro" tier (subscription) later. Pixel-Lite is the free tier, so keep features that should stay free fully client-side and avoid decisions that block adding accounts/paywalled features later.
 
 ## Stack
@@ -20,6 +20,11 @@ Vite + TypeScript (vanilla, no framework). Compression runs in a Web Worker via 
 - `src/lib/presets.ts`: Basic and Social (Facebook, Instagram, TikTok Gallery) settings
 - `src/lib/worker.ts`, `client.ts`: worker and its promise wrapper
 - `test-assets/` is git-ignored: local test photos only. Never commit photos (repo is public).
+
+## Branding
+- Logo mark: a 3x3 pixel grid fading toward the bottom-right (`logoMark` in `src/ui-utils.ts`, inherits colour from `--accent`).
+- Wordmark: "Pixel" (Inter 600) + "-Lite" (Fraunces italic, accent teal), echoing the italic in the hero headline. The favicon is
+  the same grid as an inline SVG in `index.html`. Pro tier would be "Pixel-Pro" (same mark; swap the italic word).
 
 ## Core rules
 - Size by long edge only; never upscale, never crop (aspect ratio is always kept).
