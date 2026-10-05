@@ -55,6 +55,9 @@ app.innerHTML = `
     </div>
     <p id="mode-note" class="mode-note"></p>
 
+    <details class="more">
+      <summary><b class="more-ttl">More options</b><span id="more-state">All defaults</span></summary>
+      <div class="more-body">
     <details class="tune">
       <summary><b class="ttl">Fine-tune <em class="opt">Optional</em></b><span id="tune-state">Using recommended settings</span></summary>
       <div class="tune-body">
@@ -103,6 +106,8 @@ app.innerHTML = `
           <div class="srow"><label for="filter-amt">Intensity</label><b id="filter-amt-val">100</b></div>
           <input id="filter-amt" type="range" min="0" max="100" step="1" value="100" />
         </div>
+      </div>
+    </details>
       </div>
     </details>
 
@@ -159,6 +164,14 @@ const tuneState = document.getElementById('tune-state')!;
 const tuneHint = document.getElementById('tune-hint')!;
 const isCustom = () => +qEl.value !== Math.round(target.preset.quality * 100) || +szEl.value !== target.preset.longEdge;
 
+// Summary on the collapsed "More options" header, so changes are visible without opening it.
+function syncMore() {
+  const active = [isCustom() && 'Fine-tune', exChanged() && 'Extras', filterId && 'Filter'].filter(Boolean);
+  const state = document.getElementById('more-state')!;
+  state.textContent = active.length ? active.join(' · ') : 'All defaults';
+  state.classList.toggle('custom', active.length > 0);
+}
+
 function syncTune() {
   const rec = target.preset;
   document.getElementById('q-val')!.textContent = `${qEl.value}%`;
@@ -174,6 +187,7 @@ function syncTune() {
   tuneHint.textContent = hints.join(' ');
   document.getElementById('tune-foot')!.hidden = !isCustom() && !hints.length;
   document.getElementById('tune-reset')!.hidden = !isCustom();
+  syncMore();
 }
 function resetTune() {
   qEl.value = String(Math.round(target.preset.quality * 100));
@@ -208,6 +222,7 @@ function syncExtras() {
   document.getElementById('extras-hint')!.textContent = hints.join(' ');
   document.getElementById('extras-foot')!.hidden = !changed && !hints.length;
   document.getElementById('extras-reset')!.hidden = !changed;
+  syncMore();
 }
 function resetExtras() {
   for (const e of EXTRAS) exEl(e.id).value = String(exRec(e.id));
@@ -233,6 +248,7 @@ function syncFilter() {
   document.getElementById('filter-amt-row')!.hidden = !f;
   document.getElementById('filter-hint')!.textContent = f?.params.grain ? 'Includes fine grain, which makes files larger.' : '';
   document.getElementById('filter-amt-val')!.textContent = `${amtEl.value}%`;
+  syncMore();
 }
 filterBtns.forEach((b) => (b.onclick = () => ((filterId = b.dataset.filter!), syncFilter())));
 amtEl.oninput = syncFilter;

@@ -30,7 +30,7 @@ Vite + TypeScript (vanilla, no framework). Compression runs in a Web Worker via 
   Social presets include built-in light sharpening (0.12). Platform sizes are commonly published figures and
   have not been verified against current platform docs. Platforms re-compress everything; do not claim we
   reduce their compression, only that we give them less to damage.
-- **Fine-tune / Extras / Filters** panels are all marked OPTIONAL. Defaults: Fine-tune = recommended for the
+- **Fine-tune / Extras / Filters** panels live inside a collapsed "More options" section (its header shows which are active) and are each marked OPTIONAL. Defaults: Fine-tune = recommended for the
   selected target, Extras = none applied (all sliders 0), Filters = None. The Sharpen slider is *extra* on top
   of a Social preset's built-in sharpening. Filter choice persists across mode changes; Fine-tune/Extras reset
   when the target changes.

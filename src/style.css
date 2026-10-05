@@ -310,3 +310,17 @@ body.modal-open { overflow: hidden; }
 .ghost { padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: transparent; color: var(--muted); font: 500 14px var(--sans); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
 .ghost:hover { color: var(--text); border-color: var(--muted); }
 .ghost:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* More options: outer collapsible wrapping Fine-tune, Extras and Filters */
+.more { margin: 0 0 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface-2); }
+.more > summary { display: flex; align-items: center; gap: 12px; padding: 13px 16px; cursor: pointer; list-style: none; }
+.more > summary::-webkit-details-marker { display: none; }
+.more > summary::after { content: '+'; margin-left: auto; color: var(--muted); font-size: 20px; line-height: 1; }
+.more[open] > summary::after { content: '–'; }
+.more > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 16px; }
+.more-ttl { font-size: 15px; font-weight: 600; }
+.more > summary span { order: 2; color: var(--muted); font-size: 12px; }
+.more > summary span.custom { color: var(--accent); }
+.more-body { display: grid; gap: 10px; padding: 0 12px 12px; }
+.more-body .tune { margin: 0; background: var(--surface); }
+.more-body .tune + .tune { margin-top: 0; }
