@@ -1,4 +1,5 @@
 import type { Preset } from './presets';
+import { sharpen } from './sharpen';
 
 export interface Output {
   preset: Preset;
@@ -12,7 +13,7 @@ export interface CompressResult {
   outputs: Output[];
 }
 
-/** Scale so the long edge is at most `longEdge`; never upscale. */
+/** Scale so the long edge is at most `longEdge`; never upscale, never crop. */
 export function fitLongEdge(w: number, h: number, longEdge: number) {
   const scale = Math.min(1, longEdge / Math.max(w, h));
   return { width: Math.round(w * scale), height: Math.round(h * scale) };
@@ -56,7 +57,13 @@ export async function compress(file: File, presets: Preset[]): Promise<CompressR
   for (const preset of sorted) {
     const { width, height } = fitLongEdge(prev.width, prev.height, preset.longEdge);
     const canvas = stepDown(prev, width, height);
-    const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: preset.quality });
+    let encodeFrom = canvas;
+    if (preset.sharpen && (width < prev.width || height < prev.height)) {
+      // Sharpen a copy so the step-down chain isn't sharpened repeatedly.
+      encodeFrom = resize(canvas, width, height);
+      sharpen(encodeFrom, preset.sharpen);
+    }
+    const blob = await encodeFrom.convertToBlob({ type: 'image/jpeg', quality: preset.quality });
     outputs.push({ preset, blob, width, height });
     prev = canvas;
   }

@@ -1,6 +1,6 @@
 import './style.css';
 import { compressInWorker } from './lib/client';
-import { PRESETS } from './lib/presets';
+import { BASIC, SOCIAL } from './lib/presets';
 import { openCompare } from './compare';
 
 const fmt = (b: number) => (b >= 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1e3))} KB`);
@@ -30,6 +30,17 @@ app.innerHTML = `
       <p class="lede">Cut file sizes by up to 97% with no visible difference, and strip hidden location data, all without a single upload.</p>
     </section>
 
+    <div class="modes two" role="radiogroup" aria-label="Compression type">
+      <button class="mode on" role="radio" aria-checked="true" data-mode="basic"><b>Basic compression</b><span>${BASIC.blurb}</span></button>
+      <button class="mode" role="radio" aria-checked="false" data-mode="social"><b>Social</b><span>Facebook, Instagram, TikTok</span></button>
+    </div>
+    <div id="platforms" class="modes sub" role="radiogroup" aria-label="Platform" hidden>
+      ${SOCIAL.map(
+        (t) => `<button class="mode" role="radio" aria-checked="false" data-target="${t.preset.id}"><b>${t.preset.label}</b><span>${t.blurb}</span></button>`,
+      ).join('')}
+    </div>
+    <p id="mode-note" class="mode-note"></p>
+
     <label id="drop" class="drop" tabindex="0">
       <input id="file" type="file" accept="image/*" multiple hidden />
       <span class="drop-icon">${icon.upload}</span>
@@ -54,6 +65,28 @@ const summary = document.getElementById('summary')!;
 const input = document.getElementById('file') as HTMLInputElement;
 const drop = document.getElementById('drop')!;
 
+let target = BASIC;
+const modeNote = document.getElementById('mode-note')!;
+const platforms = document.getElementById('platforms')!;
+const typeBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-mode]'));
+const platformBtns = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-target]'));
+const mark = (btns: HTMLButtonElement[], on: (b: HTMLButtonElement) => boolean) =>
+  btns.forEach((b) => {
+    b.classList.toggle('on', on(b));
+    b.setAttribute('aria-checked', String(on(b)));
+  });
+function setTarget(t: typeof BASIC) {
+  target = t;
+  const social = t !== BASIC;
+  mark(typeBtns, (b) => (b.dataset.mode === 'social') === social);
+  platforms.hidden = !social;
+  mark(platformBtns, (b) => social && b.dataset.target === t.preset.id);
+  modeNote.textContent = t.note + ' Applies to photos you add next. Photos are never cropped.';
+}
+typeBtns.forEach((b) => (b.onclick = () => setTarget(b.dataset.mode === 'social' ? SOCIAL[0] : BASIC)));
+platformBtns.forEach((b) => (b.onclick = () => setTarget(SOCIAL.find((t) => t.preset.id === b.dataset.target)!)));
+setTarget(BASIC);
+
 const totals = { files: 0, before: 0, after: 0 };
 
 function updateSummary() {
@@ -63,7 +96,7 @@ function updateSummary() {
   summary.innerHTML = `
     <div><b>${totals.files}</b><span>${totals.files === 1 ? 'photo' : 'photos'}</span></div>
     <div><b>${fmt(totals.before)}</b><span>before</span></div>
-    <div><b>${fmt(totals.after)}</b><span>after (Display)</span></div>
+    <div><b>${fmt(totals.after)}</b><span>after</span></div>
     <div class="accent"><b>−${saved}%</b><span>saved</span></div>`;
 }
 
@@ -75,7 +108,7 @@ async function handle(files: FileList | File[]) {
     card.innerHTML = `<div class="thumb skeleton"></div><div class="info"><h2>${name}</h2><p class="meta">Optimizing…</p></div>`;
     results.prepend(card);
     try {
-      const r = await compressInWorker(file, PRESETS);
+      const r = await compressInWorker(file, [target.preset]);
       const base = esc(file.name.replace(/\.[^.]+$/, ''));
       const display = r.outputs[0];
       const previewUrl = URL.createObjectURL(display.blob);
