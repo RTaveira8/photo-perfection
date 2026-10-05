@@ -403,3 +403,28 @@ main[hidden] { display: none; }
 .compat-warn { margin: 0 0 14px; padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 14px; background: var(--accent-soft); font-size: 14px; line-height: 1.5; }
 .compat-warn a { color: var(--accent); font-weight: 600; text-underline-offset: 3px; }
 .drop.disabled { opacity: 0.45; pointer-events: none; }
+
+/* Save to Photos / Share (phones and tablets only) */
+.save { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--accent); border-radius: 12px; background: var(--accent-soft); color: var(--accent); font: 600 14px var(--sans); cursor: pointer; transition: transform 0.15s, background 0.15s; }
+.save:hover { transform: translateY(-1px); }
+.save:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.outputs + .save { margin-top: 10px; align-self: flex-start; }
+.dl-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.dl-row .zip.dl { margin-top: 0; }
+
+/* Share / Save matches "Download clean file": same padding, text size and (with a matching 1px border) the same height */
+.save { padding: 8px 14px; font-size: 13px; }
+.zip.dl { border: 1px solid transparent; }
+
+/* Equal width as well: the two buttons share the width of the wider one (side by side on desktop, stacked on phones) */
+.dl-row { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; width: fit-content; max-width: 100%; }
+.dl-row > * { justify-content: center; }
+
+@media (max-width: 640px) {
+  .dl-row { grid-auto-flow: row; width: 100%; }
+  /* More breathing room between the logo row and the Compress / Metadata Stripper switcher */
+  .nav { row-gap: 22px; padding-top: 28px; }
+}
+
+/* Version badge in the footer */
+.ver { display: inline-block; margin-left: 6px; padding: 1px 9px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); color: var(--muted); font-size: 11px; font-weight: 500; letter-spacing: 0.02em; vertical-align: 1px; }

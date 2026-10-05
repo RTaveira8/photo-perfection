@@ -70,6 +70,17 @@ Vite + TypeScript (vanilla, no framework). Compression runs in a Web Worker via 
 - All batch code (queueing, ZIP, Clear all) is still in place. Set `batch: true` to re-enable everything.
 - Photos can still be added one after another; results accumulate and each has its own download and remove button.
 
+## Save to Photos (phones and tablets)
+- `src/lib/share.ts`: on touch devices whose browser can share files (`navigator.canShare({files})`), result cards get a button that opens the
+  share sheet. iPhone label is "Save to Photos" (the sheet's "Save Image" goes into Photos; a plain download lands in Files); Android is "Share / Save".
+  Cancelling does nothing; a real failure falls back to a normal download. Desktop (mouse pointer) never shows it and keeps the Download button.
+- Verified with unit tests, a faked share sheet and Chrome's mobile emulation. NOT yet tried on a real iPhone or Android phone: check the share sheet wording and that
+  photos land in the Photos library / gallery.
+
+## Versioning
+- The footer shows a beta badge ("Beta 1.0.1"). The only place the number lives is `APP_VERSION` in `src/config.ts`.
+  Bump it with each release the user pushes: Beta 1.0.1 -> Beta 1.0.2 -> Beta 1.0.3 ...  Do it before the commit, and mention the new number in the commit message.
+
 ## Temporary test site
 - `index.html` has `<meta name="robots" content="noindex, nofollow">` and `public/robots.txt` disallows everything, so the test deployment stays out of search.
   REMOVE BOTH at public launch. Hosting plan: static host (Netlify/Vercel/Cloudflare Pages) building `npm run build` -> `dist`. Hash routing (`#strip`) needs no

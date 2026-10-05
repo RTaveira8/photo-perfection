@@ -6,9 +6,10 @@ import { FILTERS } from './lib/filters';
 import { mountStrip } from './strip-ui';
 
 import { fmt, esc, icon, limitBatch, batchSoon, logoMark, wordmark } from './ui-utils';
-import { FEATURES } from './config';
+import { APP_VERSION, FEATURES } from './config';
 import { initTheme } from './theme';
 import { support } from './support';
+import { saveToDevice, shareLabel, shareSupported } from './lib/share';
 
 // Finishing touches. Slider value -> effect amount via `scale`. All default to off, except
 // Sharpen, which defaults to the selected preset's recommendation.
@@ -134,7 +135,7 @@ app.innerHTML = `
     <div id="results" class="results"></div>
   </main>
 
-  <footer class="foot"><span class="foot-brand">${logoMark}${wordmark}</span><span>Your photos stay yours.</span></footer>`;
+  <footer class="foot"><span class="foot-brand">${logoMark}${wordmark}</span><span>Your photos stay yours. <span class="ver">${APP_VERSION}</span></span></footer>`;
 
 const results = document.getElementById('results')!;
 const summary = document.getElementById('summary')!;
@@ -366,6 +367,10 @@ async function handle(files: FileList | File[]) {
       const appliedHtml = applied.length
         ? `<p class="applied">${applied.map((a) => `<span><b>${a.kind}</b>${esc(a.text)}</span>`).join('')}</p>`
         : '';
+      // On phones and tablets, offer the share sheet (iPhone: "Save Image" goes straight to Photos).
+      const fileStem = file.name.replace(/.[^.]+$/, '');
+      const shareList = r.outputs.map((o) => new File([o.blob], `${fileStem}-${o.preset.id}.jpg`, { type: 'image/jpeg' }));
+      const saveHtml = shareSupported(shareList) ? `<button class="save" type="button">${icon.share}<span>${shareLabel()}</span></button>` : '';
       const rows = r.outputs
         .map((o) => {
           const url = URL.createObjectURL(o.blob);
@@ -392,9 +397,11 @@ async function handle(files: FileList | File[]) {
           <p class="meta">Original ${r.original.width} × ${r.original.height} · ${fmt(r.original.bytes)} <span class="tag">${icon.pin} Location data removed</span></p>
           ${appliedHtml}
           <ul class="outputs">${rows}</ul>
+          ${saveHtml}
         </div>
         ${removeBtn}`;
       card.querySelector<HTMLElement>('.remove')!.onclick = () => removeCard(card);
+      card.querySelector<HTMLElement>('.save')?.addEventListener('click', () => void saveToDevice(shareList));
       card.querySelector<HTMLElement>('.thumb-btn')!.onclick = () =>
         openCompare({
           name: file.name,

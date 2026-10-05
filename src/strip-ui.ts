@@ -2,6 +2,7 @@ import { zipSync } from 'fflate';
 import { NotJpegError, stripMetadata, type StripOptions, type Summary } from './lib/strip';
 import { esc, fmt, icon, limitBatch, batchSoon } from './ui-utils';
 import { FEATURES } from './config';
+import { saveToDevice, shareLabel, shareSupported } from './lib/share';
 
 interface Row {
   label: string;
@@ -129,6 +130,8 @@ export function mountStrip(root: HTMLElement) {
         const url = URL.createObjectURL(blob);
         const stem = file.name.replace(/\.[^.]+$/, '');
         const rows = rowsFor(r.before, r.after);
+        const outFile = new File([blob], `${stem}-clean.jpg`, { type: 'image/jpeg' });
+        const saveHtml = shareSupported([outFile]) ? `<button class="save" type="button">${icon.share}<span>${shareLabel()}</span></button>` : '';
         const removed = rows.filter((x) => x.removed).length;
         const kept = rows.length - removed;
         const keeps = [r.after.orientation ? 'Orientation' : '', r.after.icc ? 'Colour profile' : '', r.after.fields.some((f) => f.key === 'artist' || f.key === 'copyright') ? 'Credit' : '']
@@ -153,10 +156,11 @@ export function mountStrip(root: HTMLElement) {
                 .join('')}</ul></details>`
                 : ''
             }
-            <a class="zip dl" href="${url}" download="${esc(stem)}-clean.jpg">${icon.down}<span>Download clean file</span></a>
+            <div class="dl-row"><a class="zip dl" href="${url}" download="${esc(stem)}-clean.jpg">${icon.down}<span>Download clean file</span></a>${saveHtml}</div>
           </div>
           ${removeBtn}`;
         card.querySelector<HTMLElement>('.remove')!.onclick = () => removeCard(card);
+        card.querySelector<HTMLElement>('.save')?.addEventListener('click', () => void saveToDevice([outFile]));
         records.set(card, { name: `${stem}-clean.jpg`, blob, url });
         updateActions();
       } catch (e) {
