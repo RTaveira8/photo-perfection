@@ -215,3 +215,11 @@ body.modal-open { overflow: hidden; }
 .modes.sub { grid-template-columns: repeat(3, 1fr); animation: rise 0.25s ease both; }
 .modes[hidden] { display: none; }
 @media (max-width: 640px) { .modes.two, .modes.sub { grid-template-columns: 1fr; } }
+
+/* ZIP */
+.actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+.actions[hidden] { display: none; }
+.zip { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 0; border-radius: 12px; background: var(--accent); color: #04211f; font: 600 14px var(--sans); cursor: pointer; transition: transform 0.15s, opacity 0.15s; }
+.zip:hover { transform: translateY(-1px); }
+.zip:disabled { opacity: 0.6; cursor: progress; }
+.zip:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }

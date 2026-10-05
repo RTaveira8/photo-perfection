@@ -2,6 +2,7 @@ import './style.css';
 import { compressInWorker } from './lib/client';
 import { BASIC, SOCIAL } from './lib/presets';
 import { openCompare } from './compare';
+import { zipSync } from 'fflate';
 
 const fmt = (b: number) => (b >= 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1e3))} KB`);
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -55,6 +56,7 @@ app.innerHTML = `
     </ul>
 
     <div id="summary" class="summary" hidden></div>
+    <div id="actions" class="actions" hidden><button id="zip" class="zip">${icon.down}<span></span></button></div>
     <div id="results" class="results"></div>
   </main>
 
@@ -89,10 +91,38 @@ setTarget(BASIC);
 
 const totals = { files: 0, before: 0, after: 0 };
 
+const zipItems: { name: string; blob: Blob }[] = [];
+const actions = document.getElementById('actions')!;
+const zipBtn = document.getElementById('zip') as HTMLButtonElement;
+
+zipBtn.onclick = async () => {
+  zipBtn.disabled = true;
+  try {
+    const files: Record<string, Uint8Array> = {};
+    const seen = new Map<string, number>();
+    for (const { name, blob } of zipItems) {
+      const n = seen.get(name) ?? 0;
+      seen.set(name, n + 1);
+      const unique = n ? name.replace(/\.jpg$/, `-${n + 1}.jpg`) : name;
+      files[unique] = new Uint8Array(await blob.arrayBuffer());
+    }
+    // JPEGs are already compressed, so store them (level 0) rather than waste time deflating.
+    const zip = zipSync(files, { level: 0 });
+    const url = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'shred-photos.zip' });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  } finally {
+    zipBtn.disabled = false;
+  }
+};
+
 function updateSummary() {
   if (!totals.files) return;
   const saved = Math.round((1 - totals.after / totals.before) * 100);
   summary.hidden = false;
+  actions.hidden = false;
+  zipBtn.querySelector('span')!.textContent = `Download all as ZIP (${zipItems.length} ${zipItems.length === 1 ? 'file' : 'files'})`;
   summary.innerHTML = `
     <div><b>${totals.files}</b><span>${totals.files === 1 ? 'photo' : 'photos'}</span></div>
     <div><b>${fmt(totals.before)}</b><span>before</span></div>
@@ -145,6 +175,8 @@ async function handle(files: FileList | File[]) {
           outputSize: fmt(display.blob.size),
           outputLabel: display.preset.label,
         });
+      const stem = file.name.replace(/\.[^.]+$/, '');
+      for (const o of r.outputs) zipItems.push({ name: `${stem}-${o.preset.id}.jpg`, blob: o.blob });
       totals.files++;
       totals.before += r.original.bytes;
       totals.after += display.blob.size;
