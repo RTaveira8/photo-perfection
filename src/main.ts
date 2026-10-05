@@ -16,6 +16,17 @@ const icon = {
   down: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>`,
 };
 
+// Finishing touches. Slider value -> effect amount via `scale`. All default to off, except
+// Sharpen, which defaults to the selected preset's recommendation.
+const EXTRAS = [
+  { id: 'sharpen', label: 'Sharpen', min: 0, max: 100, scale: 1 / 200 },
+  { id: 'clarity', label: 'Clarity', min: 0, max: 100, scale: 1 / 100 },
+  { id: 'warmth', label: 'Warmth', min: -100, max: 100, scale: 1 / 100 },
+  { id: 'tint', label: 'Tint', min: -100, max: 100, scale: 1 / 100 },
+  { id: 'grain', label: 'Grain', min: 0, max: 100, scale: 1 / 100 },
+] as const;
+type ExtraId = (typeof EXTRAS)[number]['id'];
+
 const app = document.getElementById('app')!;
 app.innerHTML = `
   <div class="glow" aria-hidden="true"></div>
@@ -41,6 +52,40 @@ app.innerHTML = `
       ).join('')}
     </div>
     <p id="mode-note" class="mode-note"></p>
+
+    <details class="tune">
+      <summary>Fine-tune <span id="tune-state">Using recommended settings</span></summary>
+      <div class="tune-body">
+        <div class="slider">
+          <div class="srow"><label for="q">Quality</label><span id="q-rec" class="rec"></span><b id="q-val"></b></div>
+          <input id="q" type="range" min="50" max="100" step="1" />
+        </div>
+        <div class="slider">
+          <div class="srow"><label for="sz">Longest side</label><span id="sz-rec" class="rec"></span><b id="sz-val"></b></div>
+          <input id="sz" type="range" min="320" max="4096" step="1" />
+        </div>
+        <div id="tune-foot" class="tune-foot" hidden>
+          <p id="tune-hint" class="tune-hint"></p>
+          <button id="tune-reset" class="link" type="button">Reset to recommended</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="tune">
+      <summary>Extras <span id="extras-state">None applied</span></summary>
+      <div class="tune-body extras">
+        ${EXTRAS.map(
+          (e) => `<div class="slider">
+          <div class="srow"><label for="ex-${e.id}">${e.label}</label><span id="ex-${e.id}-rec" class="rec"></span><b id="ex-${e.id}-val"></b></div>
+          <input id="ex-${e.id}" type="range" min="${e.min}" max="${e.max}" step="1" />
+        </div>`,
+        ).join('')}
+        <div id="extras-foot" class="tune-foot" hidden>
+          <p id="extras-hint" class="tune-hint"></p>
+          <button id="extras-reset" class="link" type="button">Reset extras</button>
+        </div>
+      </div>
+    </details>
 
     <label id="drop" class="drop" tabindex="0">
       <input id="file" type="file" accept="image/*" multiple hidden />
@@ -84,6 +129,77 @@ function setTarget(t: typeof BASIC) {
   platforms.hidden = !social;
   mark(platformBtns, (b) => social && b.dataset.target === t.preset.id);
   modeNote.textContent = t.note + ' Applies to photos you add next. Photos are never cropped.';
+  resetTune();
+  resetExtras();
+}
+
+// Fine-tune sliders. Defaults are always the selected target's recommendation.
+const qEl = document.getElementById('q') as HTMLInputElement;
+const szEl = document.getElementById('sz') as HTMLInputElement;
+const tuneState = document.getElementById('tune-state')!;
+const tuneHint = document.getElementById('tune-hint')!;
+const isCustom = () => +qEl.value !== Math.round(target.preset.quality * 100) || +szEl.value !== target.preset.longEdge;
+
+function syncTune() {
+  const rec = target.preset;
+  document.getElementById('q-val')!.textContent = `${qEl.value}%`;
+  document.getElementById('sz-val')!.textContent = `${szEl.value} px`;
+  document.getElementById('q-rec')!.textContent = `recommended ${Math.round(rec.quality * 100)}%`;
+  document.getElementById('sz-rec')!.textContent = `recommended ${rec.longEdge} px`;
+  tuneState.textContent = isCustom() ? 'Custom settings' : 'Using recommended settings';
+  tuneState.classList.toggle('custom', isCustom());
+  const hints: string[] = [];
+  if (+qEl.value < 75) hints.push('Below about 75% quality, smooth gradients (sky, paint) can start to show banding.');
+  if (+qEl.value > 95) hints.push('Above 95% gives larger files with little visible gain.');
+  if (+szEl.value > 2048 && target !== BASIC) hints.push('Social platforms will shrink anything larger than this themselves.');
+  tuneHint.textContent = hints.join(' ');
+  document.getElementById('tune-foot')!.hidden = !isCustom() && !hints.length;
+  document.getElementById('tune-reset')!.hidden = !isCustom();
+}
+function resetTune() {
+  qEl.value = String(Math.round(target.preset.quality * 100));
+  szEl.value = String(target.preset.longEdge);
+  syncTune();
+}
+qEl.oninput = szEl.oninput = syncTune;
+document.getElementById('tune-reset')!.onclick = resetTune;
+
+// Extras sliders
+const exEl = (id: ExtraId) => document.getElementById(`ex-${id}`) as HTMLInputElement;
+const exRec = (id: ExtraId) => (id === 'sharpen' ? Math.round((target.preset.sharpen ?? 0) * 200) : 0);
+const exChanged = () => EXTRAS.some((e) => +exEl(e.id).value !== exRec(e.id));
+const signed = (v: number, e: (typeof EXTRAS)[number]) => (e.min < 0 && v > 0 ? `+${v}` : String(v));
+
+function syncExtras() {
+  for (const e of EXTRAS) {
+    const v = +exEl(e.id).value;
+    document.getElementById(`ex-${e.id}-val`)!.textContent = signed(v, e);
+    const rec = exRec(e.id);
+    document.getElementById(`ex-${e.id}-rec`)!.textContent = rec ? `recommended ${rec}` : '';
+  }
+  const changed = EXTRAS.filter((e) => +exEl(e.id).value !== exRec(e.id)).length;
+  const active = EXTRAS.filter((e) => +exEl(e.id).value).length;
+  const state = document.getElementById('extras-state')!;
+  state.textContent = changed ? `${changed} adjusted` : active ? 'Using recommended settings' : 'None applied';
+  state.classList.toggle('custom', !!changed);
+  const hints: string[] = [];
+  if (+exEl('grain').value) hints.push('Grain adds texture but makes files larger.');
+  if (+exEl('sharpen').value > 60 || +exEl('clarity').value > 70) hints.push('Strong sharpening or clarity can look harsh and exaggerate JPEG artifacts.');
+  document.getElementById('extras-hint')!.textContent = hints.join(' ');
+  document.getElementById('extras-foot')!.hidden = !changed && !hints.length;
+  document.getElementById('extras-reset')!.hidden = !changed;
+}
+function resetExtras() {
+  for (const e of EXTRAS) exEl(e.id).value = String(exRec(e.id));
+  syncExtras();
+}
+EXTRAS.forEach((e) => (exEl(e.id).oninput = syncExtras));
+document.getElementById('extras-reset')!.onclick = resetExtras;
+
+function currentPreset() {
+  if (!isCustom() && !exChanged()) return target.preset;
+  const fx = Object.fromEntries(EXTRAS.map((e) => [e.id, +exEl(e.id).value * e.scale]));
+  return { ...target.preset, ...fx, label: `${target.preset.label} (custom)`, quality: +qEl.value / 100, longEdge: +szEl.value };
 }
 typeBtns.forEach((b) => (b.onclick = () => setTarget(b.dataset.mode === 'social' ? SOCIAL[0] : BASIC)));
 platformBtns.forEach((b) => (b.onclick = () => setTarget(SOCIAL.find((t) => t.preset.id === b.dataset.target)!)));
@@ -138,7 +254,7 @@ async function handle(files: FileList | File[]) {
     card.innerHTML = `<div class="thumb skeleton"></div><div class="info"><h2>${name}</h2><p class="meta">Optimizing…</p></div>`;
     results.prepend(card);
     try {
-      const r = await compressInWorker(file, [target.preset]);
+      const r = await compressInWorker(file, [currentPreset()]);
       const base = esc(file.name.replace(/\.[^.]+$/, ''));
       const display = r.outputs[0];
       const previewUrl = URL.createObjectURL(display.blob);

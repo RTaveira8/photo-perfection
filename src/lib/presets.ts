@@ -1,11 +1,11 @@
-export interface Preset {
+import type { Effects } from './effects';
+
+export interface Preset extends Effects {
   id: string;
   label: string;
   /** Long edge in px. Aspect ratio is always kept (no cropping); never upscaled. */
   longEdge: number;
   quality: number;
-  /** 0 = none. Light sharpen applied after downscaling. */
-  sharpen?: number;
 }
 
 export interface Target {

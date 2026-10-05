@@ -1,5 +1,5 @@
 import type { Preset } from './presets';
-import { sharpen } from './sharpen';
+import { applyEffects, hasEffects } from './effects';
 
 export interface Output {
   preset: Preset;
@@ -58,10 +58,10 @@ export async function compress(file: File, presets: Preset[]): Promise<CompressR
     const { width, height } = fitLongEdge(prev.width, prev.height, preset.longEdge);
     const canvas = stepDown(prev, width, height);
     let encodeFrom = canvas;
-    if (preset.sharpen && (width < prev.width || height < prev.height)) {
-      // Sharpen a copy so the step-down chain isn't sharpened repeatedly.
+    if (hasEffects(preset)) {
+      // Work on a copy so effects don't compound through the step-down chain.
       encodeFrom = resize(canvas, width, height);
-      sharpen(encodeFrom, preset.sharpen);
+      applyEffects(encodeFrom, preset);
     }
     const blob = await encodeFrom.convertToBlob({ type: 'image/jpeg', quality: preset.quality });
     outputs.push({ preset, blob, width, height });
