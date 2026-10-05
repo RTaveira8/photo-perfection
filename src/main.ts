@@ -33,7 +33,7 @@ const app = document.getElementById('app')!;
 app.innerHTML = `
   <div class="glow" aria-hidden="true"></div>
   <header class="nav">
-    <div class="brand"><span class="mark"></span>Shred</div>
+    <div class="brand"><span class="mark"></span>PixelLite</div>
     <span class="nav-note">${icon.lock} Processed on your device</span>
   </header>
 
@@ -129,7 +129,7 @@ app.innerHTML = `
     <div id="results" class="results"></div>
   </main>
 
-  <footer class="foot">Shred · Your photos stay yours.</footer>`;
+  <footer class="foot">PixelLite · Your photos stay yours.</footer>`;
 
 const results = document.getElementById('results')!;
 const summary = document.getElementById('summary')!;
@@ -310,7 +310,7 @@ zipBtn.onclick = async () => {
     // JPEGs are already compressed, so store them (level 0) rather than waste time deflating.
     const zip = zipSync(files, { level: 0 });
     const url = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
-    const a = Object.assign(document.createElement('a'), { href: url, download: 'shred-photos.zip' });
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'pixellite-photos.zip' });
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
   } finally {

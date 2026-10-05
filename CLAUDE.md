@@ -1,8 +1,8 @@
-# Shred
+# PixelLite
 
 Client-side image optimizer: shrinks photos without visible quality loss, strips EXIF/GPS, no uploads.
 Starting brief: `docs/handoff.md` (from the Clutch project). It is a guide to refine, not a spec.
-Repo: github.com/RTaveira8/photo-perfection (public). The product name is "Shred"; the repo/folder/package keep the old name.
+Repo: github.com/RTaveira8/photo-perfection (public). The product name is "PixelLite" (renamed from "Shred"); the GitHub repo and local folder are still named photo-perfection.
 
 ## Stack
 Vite + TypeScript (vanilla, no framework). Compression runs in a Web Worker via OffscreenCanvas. ZIP via `fflate`.
