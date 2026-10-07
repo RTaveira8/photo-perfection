@@ -97,4 +97,7 @@ Vite + TypeScript (vanilla, no framework). Compression runs in a Web Worker via 
 
 ## Open decisions
 Audience, HEIC support, WebP/AVIF via WASM, batch limits and memory on phones (not yet measured), business model
-(handoff section 7). Not built yet: custom preset saving, batch rename, PWA/offline, phone-width visual QA.
+(handoff section 7). Not built yet: custom preset saving, batch rename, PWA/offline.
+Phone-width QA done (Oct 2026) at 320/375/401/414 px, both tools, both themes, compare viewer: no sideways scroll.
+To re-check: emulate a tall viewport (e.g. 375x3000) for full-page screenshots, and feed `test-assets/` photos by
+dispatching a `drop` event on the visible `.drop` (the hidden stripper dropzone comes first in the DOM).

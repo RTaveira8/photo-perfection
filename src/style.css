@@ -94,6 +94,7 @@ h1 em { font-style: italic; color: var(--accent); }
 .drop {
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   padding: 56px 24px;
+  text-align: center;
   background: var(--surface);
   border: 1px dashed color-mix(in srgb, var(--text) 22%, transparent);
   border-radius: 20px;
@@ -151,7 +152,15 @@ h1 em { font-style: italic; color: var(--accent); }
 .row-main b { font-weight: 600; font-size: 14px; }
 .row-main span { color: var(--muted); font-size: 12px; }
 .size { font-variant-numeric: tabular-nums; font-weight: 500; }
-.pill { padding: 2px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600; }
+.pill { padding: 2px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.pill.up { background: var(--surface-2); color: var(--muted); } /* output came out larger than the original */
+.size, .row-main span { white-space: nowrap; }
+/* Narrow phones: label on its own line, then size, change and download underneath */
+@media (max-width: 400px) {
+  .outputs li { flex-wrap: wrap; row-gap: 8px; }
+  .outputs .row-main { flex: 1 0 100%; }
+  .outputs .btn { margin-left: auto; }
+}
 .btn {
   display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px;
   background: var(--text); color: var(--bg); font-size: 16px; text-decoration: none; transition: transform 0.15s, opacity 0.15s;
@@ -213,6 +222,9 @@ body.modal-open { overflow: hidden; }
   font: 500 12px var(--sans); backdrop-filter: blur(8px); pointer-events: none;
 }
 .label.l { left: 12px; } .label.r { right: 12px; }
+/* Narrow phones: the two slider labels would collide along the top, so the result label moves to the bottom corner */
+.label { max-width: calc(100% - 24px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 480px) { .stage:not(.flip) .label.r { top: auto; bottom: 12px; } }
 .modal-hint { margin: 0; text-align: center; color: var(--muted); font-size: 13px; }
 @keyframes fade { from { opacity: 0; } }
 
@@ -246,7 +258,7 @@ body.modal-open { overflow: hidden; }
 .tune summary::-webkit-details-marker { display: none; }
 .tune summary::after { content: '+'; color: var(--muted); font-weight: 400; font-size: 18px; margin-left: auto; }
 .tune[open] summary::after { content: '–'; }
-.tune summary span { order: 2; color: var(--muted); font-weight: 400; font-size: 12px; }
+.tune summary span { order: 2; color: var(--muted); font-weight: 400; font-size: 12px; text-align: right; }
 .tune summary span.custom { color: var(--accent); }
 .tune-body { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 28px; padding: 4px 16px 16px; }
 .slider { display: flex; flex-direction: column; gap: 6px; }
@@ -289,7 +301,7 @@ body.modal-open { overflow: hidden; }
 .filters .slider[hidden] { display: none; }
 
 /* Optional badge */
-.tune summary .ttl { order: 0; display: inline-flex; align-items: center; gap: 8px; color: var(--text); font-weight: 600; font-size: 14px; }
+.tune summary .ttl { order: 0; display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap; color: var(--text); font-weight: 600; font-size: 14px; }
 .opt { padding: 1px 7px; border: 1px solid var(--line); border-radius: 99px; color: var(--muted); font: 500 10px var(--sans); letter-spacing: 0.08em; text-transform: uppercase; font-style: normal; }
 
 /* Applied settings on finished cards */
@@ -337,7 +349,7 @@ body.modal-open { overflow: hidden; }
 .more-ttl { font-size: 15px; font-weight: 600; }
 .more > summary span { order: 2; color: var(--muted); font-size: 12px; }
 .more > summary span.custom { color: var(--accent); }
-.more-body { display: grid; gap: 10px; padding: 0 12px 12px; }
+.more-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 0 12px 12px; }
 .more-body .tune { margin: 0; background: var(--surface); }
 .more-body .tune + .tune { margin-top: 0; }
 

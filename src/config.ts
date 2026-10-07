@@ -11,4 +11,4 @@ export const FEATURES = {
  * Shown in the footer. Bump this on every beta release: Beta 1.0.1 -> Beta 1.0.2 -> ...
  * (This is the only place the version number lives.)
  */
-export const APP_VERSION = 'Beta 1.0.1';
+export const APP_VERSION = 'Beta 1.0.2';

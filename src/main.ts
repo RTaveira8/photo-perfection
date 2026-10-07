@@ -328,20 +328,26 @@ zipBtn.onclick = async () => {
   }
 };
 
+/** Size change as a signed percent: "−42%" when smaller, "+13%" when the output came out larger (e.g. a small, already-compressed JPEG at Social quality). */
+function sizeChange(before: number, after: number) {
+  const pct = Math.round((1 - after / before) * 100);
+  return pct >= 0 ? { text: `−${pct}%`, larger: false } : { text: `+${-pct}%`, larger: true };
+}
+
 function updateSummary() {
   const recs = [...records.values()];
   summary.hidden = !recs.length;
   actions.hidden = !recs.length || !FEATURES.batch; // ZIP-all / Clear all are batch features
   if (!recs.length) return;
   const totals = { files: recs.length, before: recs.reduce((n, r) => n + r.before, 0), after: recs.reduce((n, r) => n + r.after, 0) };
-  const saved = Math.round((1 - totals.after / totals.before) * 100);
+  const change = sizeChange(totals.before, totals.after);
   const count = zipItems().length;
   zipBtn.querySelector('span')!.textContent = `Download all as ZIP (${count} ${count === 1 ? 'file' : 'files'})`;
   summary.innerHTML = `
     <div><b>${totals.files}</b><span>${totals.files === 1 ? 'photo' : 'photos'}</span></div>
     <div><b>${fmt(totals.before)}</b><span>before</span></div>
     <div><b>${fmt(totals.after)}</b><span>after</span></div>
-    <div class="accent"><b>−${saved}%</b><span>saved</span></div>`;
+    <div class="${change.larger ? '' : 'accent'}"><b>${change.text}</b><span>${change.larger ? 'larger' : 'saved'}</span></div>`;
 }
 
 const removeBtn = `<button class="remove" type="button" aria-label="Remove this photo" title="Remove">${icon.close}</button>`;
@@ -375,11 +381,11 @@ async function handle(files: FileList | File[]) {
         .map((o) => {
           const url = URL.createObjectURL(o.blob);
           urls.push(url);
-          const saved = Math.round((1 - o.blob.size / r.original.bytes) * 100);
+          const change = sizeChange(r.original.bytes, o.blob.size);
           return `<li>
             <div class="row-main"><b>${o.preset.label}</b><span>${o.width} × ${o.height}</span></div>
             <span class="size">${fmt(o.blob.size)}</span>
-            <span class="pill">−${saved}%</span>
+            <span class="pill${change.larger ? ' up' : ''}">${change.text}</span>
             <a class="btn" href="${url}" download="${o.preset.id}-${base}.jpg" aria-label="Download ${o.preset.label}">${icon.down}</a>
           </li>`;
         })

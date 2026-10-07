@@ -71,10 +71,16 @@ export function openCompare(o: CompareOptions) {
     stage.classList.toggle('flip', m === 'flip');
     flipbar.hidden = m !== 'flip';
     mark(viewBtns, (b) => b.dataset.view === m);
+    // Touch devices get touch wording (no arrow keys or Space on a phone).
+    const touch = matchMedia('(pointer: coarse)').matches;
     hint.textContent =
       m === 'slider'
-        ? 'Drag, or use the arrow keys, to compare. Zoom in your browser to inspect fine detail.'
-        : 'Click the image, press Space, or use the buttons to flip between the two. Flipping in place makes small differences easier to spot.';
+        ? touch
+          ? 'Drag to compare. Pinch to zoom in on fine detail.'
+          : 'Drag, or use the arrow keys, to compare. Zoom in your browser to inspect fine detail.'
+        : touch
+          ? 'Tap the image or use the buttons to flip between the two. Flipping in place makes small differences easier to spot.'
+          : 'Click the image, press Space, or use the buttons to flip between the two. Flipping in place makes small differences easier to spot.';
     if (m === 'flip') show('before');
     else range.focus();
   };
